@@ -1,0 +1,6 @@
+{
+    "USE" : "ONLY",
+    "ALGORITHMS" : ["LINEAR SVM"],
+    "TRAINING SIZE": 5000
+
+}

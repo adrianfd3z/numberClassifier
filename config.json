@@ -1,6 +1,26 @@
 {
     "USE" : "ONLY",
-    "ALGORITHMS" : ["LINEAR SVM"],
-    "TRAINING SIZE": 5000
-
+    "ALGORITHMS" : ["KNN", "LINEAR SVM"],
+    "TRAINING SIZE": 5000,
+    "BEST_HYPERPARAMETER_SEARCH" : "OFF",
+    "HYPERPARAMETERS" : {
+        
+        "KNN" : {
+            "N_NEIGHBORS" : 5,
+            "WEIGHTS" : "uniform",
+            "ALGORITHM" : "auto",
+            "LEAF_SIZE" : 30,
+            "P" : 2,
+            "METRIC" : "minkowski"
+        },
+        "LINEAR SVM": {
+            "C": 1.0,
+            "LOSS": "HINGE",
+            "PENALTY": "L2",
+            "DUAL": "True",
+            "TOL": 1e-3,
+            "MAX_ITER": 1000
+        }
+    }
+    
 }

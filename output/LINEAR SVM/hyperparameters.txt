@@ -1,0 +1,9 @@
+Hyperparameters for LINEAR SVM:
+{
+    "C": 1.0,
+    "LOSS": "hinge",
+    "PENALTY": "l2",
+    "DUAL": true,
+    "TOL": 0.001,
+    "MAX_ITER": 1000
+}

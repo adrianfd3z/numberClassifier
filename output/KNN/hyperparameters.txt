@@ -1,0 +1,8 @@
+Hyperparameters for KNN:
+{
+    "N_NEIGHBORS": 5,
+    "P": 2,
+    "ALGORITHM": "auto",
+    "WEIGHTS": "uniform",
+    "METRIC": "minkowski"
+}

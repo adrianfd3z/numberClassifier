@@ -7,9 +7,10 @@ import time
 import json
 import sys
 import os
+import seaborn as sns
 
 def load_config():
-    global use, alogirthms, train_size
+    global use, algorithms, train_size  # Aseguramos que 'algorithms' sea global
     print("Configuration loaded")
     if len(sys.argv) > 1:
         if sys.argv[1] == "--help":
@@ -33,6 +34,7 @@ def load_config():
         else:
             train_size = 5000
 
+
 def linear_svm(x_train, y_train, x_test, y_test):
     # Initialize the SVM classifier (with a linear kernel for speed)
     clf = svm.SVC(kernel='linear')
@@ -45,6 +47,8 @@ def linear_svm(x_train, y_train, x_test, y_test):
     # Print the classification report and confusion matrix
     
     save_results("LINEAR SVM", y_test, predicted)
+
+
 
 
 def save_results(algorithm, y_test, predicted):
@@ -60,26 +64,32 @@ def save_results(algorithm, y_test, predicted):
     if not os.path.exists(algorithm_dir):
         os.makedirs(algorithm_dir)
     
-    # Save the classification report
+    # Save the classification report as text
     classification_report = metrics.classification_report(y_test, predicted)
     report_path = os.path.join(algorithm_dir, 'classification_report.txt')
-    if not os.path.exists(report_path):  # Only create the file if it doesn't already exist
-        with open(report_path, 'w') as f:
-            f.write(f"Classification report for {algorithm}:\n")
-            f.write(classification_report)
-
-    # Save the confusion matrix
+    with open(report_path, 'w') as f:
+        f.write(f"Classification report for {algorithm}:\n")
+        f.write(classification_report)
+    
+    # Create and save the confusion matrix as an image
     confusion_matrix = metrics.confusion_matrix(y_test, predicted)
-    confusion_matrix_path = os.path.join(algorithm_dir, 'confusion_matrix.txt')
-    if not os.path.exists(confusion_matrix_path):  # Only create the file if it doesn't already exist
-        with open(confusion_matrix_path, 'w') as f:
-            f.write(f"Confusion matrix for {algorithm}:\n")
-            f.write(np.array2string(confusion_matrix))
+    plt.figure(figsize=(10, 7))
+    sns.heatmap(confusion_matrix, annot=True, fmt="d", cmap="Blues", cbar=False, 
+                xticklabels=np.unique(y_test), yticklabels=np.unique(y_test))
+    plt.title(f"Confusion Matrix for {algorithm}")
+    plt.xlabel("Predicted labels")
+    plt.ylabel("True labels")
+    confusion_matrix_img_path = os.path.join(algorithm_dir, 'confusion_matrix.png')
+    plt.savefig(confusion_matrix_img_path)
+    plt.close()
+
+    print(f"Results saved for {algorithm} in {algorithm_dir}")
 
 #######################################################################################################################
                                         #   M A I N     F U N C T I O N   #
 #######################################################################################################################
 def main():
+    global algorithms, use, train_size
     load_config()
     # Load the MNIST dataset
     (x_train, y_train), (x_test, y_test) = mnist.load_data()

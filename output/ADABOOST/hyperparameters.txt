@@ -1,0 +1,6 @@
+Hyperparameters for ADABOOST:
+{
+    "N_ESTIMATORS": 50,
+    "LEARNING_RATE": 1.0,
+    "ALGORITHM": "SAMME"
+}

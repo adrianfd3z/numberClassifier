@@ -1,0 +1,8 @@
+Hyperparameters for RBF SVM:
+{
+    "C": 1.0,
+    "KERNEL": "rbf",
+    "GAMMA": "scale",
+    "TOL": 0.001,
+    "MAX_ITER": -1
+}

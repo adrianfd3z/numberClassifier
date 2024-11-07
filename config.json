@@ -1,8 +1,9 @@
 {
     "USE" : "ONLY",
-    "ALGORITHMS" : ["KNN", "LINEAR SVM"],
+    "ALGORITHMS" : ["AdaBoost"],
     "TRAINING SIZE": 5000,
     "BEST_HYPERPARAMETER_SEARCH" : "OFF",
+    "USE_FULL_TRAIN": true,
     "HYPERPARAMETERS" : {
         
         "KNN" : {
@@ -20,6 +21,27 @@
             "DUAL": "True",
             "TOL": 1e-3,
             "MAX_ITER": 1000
+        },
+        "RBF_SVM": {
+            "C": 1.0,
+            "KERNEL": "rbf",
+            "GAMMA": "scale",
+            "TOL": 1e-3,
+            "MAX_ITER": 1000
+        },
+        "RANDOM FOREST": {
+            "N_ESTIMATORS": 100,
+            "CRITERION": "gini",
+            "MAX_DEPTH": 10,
+            "MIN_SAMPLES_SPLIT": 2,
+            "MIN_SAMPLES_LEAF": 1,
+            "MAX_FEATURES": "sqrt",
+            "MIN_IMPURITY_DECREASE": 0.0
+        },
+        "AdaBoost": {
+            "N_ESTIMATORS": 50,
+            "LEARNING_RATE": 0.1,
+            "ALGORITHM": "SAMME"
         }
     }
     

@@ -1,0 +1,10 @@
+Hyperparameters for RANDOM FOREST:
+{
+    "N_ESTIMATORS": 100,
+    "CRITERION": "gini",
+    "MAX_DEPTH": 10,
+    "MIN_SAMPLES_SPLIT": 2,
+    "MIN_SAMPLES_LEAF": 1,
+    "MAX_FEATURES": "sqrt",
+    "BOOTSTRAP": true
+}

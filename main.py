@@ -1,3 +1,4 @@
+import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.neighbors import KNeighborsClassifier
@@ -10,6 +11,10 @@ import json
 import sys
 import os
 import seaborn as sns
+import keras
+from keras import layers
+from keras.applications import EfficientNetV2B0
+import tensorflow as tf
 
 def load_config():
     global use, algorithms, train_size, hyperparameters, use_full_train  # Aseguramos que 'algorithms' sea global
@@ -31,8 +36,8 @@ def load_config():
             algorithms = config['ALGORITHMS']   
         else:
             algorithms = ["LINEAR SVM"]
-        if 'TRAIN_SIZE' in config:      
-            train_size = config['TRAIN_SIZE']
+        if 'TRAINING SIZE' in config:      
+            train_size = config['TRAINING SIZE']
         else:
             train_size = 5000
         if 'HYPERPARAMETERS' in config:
@@ -93,6 +98,7 @@ def linear_svm(x_train, y_train, x_test, y_test):
 
     # Save results and hyperparameters
     save_results("LINEAR SVM", y_test, predicted, hp)
+    save_model(clf, "LINEAR SVM")
 
 def knn(x_train, y_train, x_test, y_test):
     global hyperparameters
@@ -127,6 +133,7 @@ def knn(x_train, y_train, x_test, y_test):
     hp = {"N_NEIGHBORS": n_neighbors, "P": p, "ALGORITHM": algorithm, "WEIGHTS": weights, "METRIC": metric}
 
     save_results("KNN", y_test, predicted, hp)
+    save_model(clf, "KNN")
 
 def RBF_SVM(x_train, y_train, x_test, y_test):
     global hyperparameters
@@ -162,6 +169,7 @@ def RBF_SVM(x_train, y_train, x_test, y_test):
     hp = {"C": C, "KERNEL": kernel, "GAMMA": gamma, "TOL": tol, "MAX_ITER": max_iter}
 
     save_results("RBF SVM", y_test, predicted, hp)
+    save_model(clf, "RBF SVM")
 
 def random_forest(x_train, y_train, x_test, y_test):
     global hyperparameters
@@ -213,6 +221,7 @@ def random_forest(x_train, y_train, x_test, y_test):
     }
 
     save_results("RANDOM FOREST", y_test, predicted, hp)
+    save_model(clf, "RANDOM FOREST")
 def AdaBoost(x_train, y_train, x_test, y_test):
     global hyperparameters
     # Default hyperparameters for AdaBoost
@@ -248,6 +257,199 @@ def AdaBoost(x_train, y_train, x_test, y_test):
     }
 
     save_results("ADABOOST", y_test, predicted, hp)
+    save_model(clf, "ADABOOST")
+
+def simple_CNN(x_train, y_train, x_test, y_test):
+    """
+    Train a simple CNN model on the given dataset and save results.
+    """
+    # Convert labels to categorical format
+    y_train = keras.utils.to_categorical(y_train, 10)
+    y_test = keras.utils.to_categorical(y_test, 10)
+    
+    # Reshape images to add channel dimension
+    x_train = x_train.reshape(-1, 28, 28, 1)
+    x_test = x_test.reshape(-1, 28, 28, 1)
+
+    # Expand dimensions to match RGB input requirements
+    x_train = np.repeat(x_train, 3, axis=-1)
+    x_test = np.repeat(x_test, 3, axis=-1)
+
+    # Resize images to 32x32 to match the model's input requirements
+    x_train = tf.image.resize(x_train, (32, 32)).numpy()
+    x_test = tf.image.resize(x_test, (32, 32)).numpy()
+
+    # Define input shape
+    input_shape = (32, 32, 3)
+
+    # Build the CNN model
+    model = keras.Sequential([
+        keras.Input(shape=input_shape),
+        layers.Conv2D(32, kernel_size=(3, 3), activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),
+        layers.Conv2D(64, kernel_size=(3, 3), activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),
+        layers.Flatten(),
+        layers.Dropout(0.5),
+        layers.Dense(10, activation="softmax"),
+    ])
+
+    # Compile the model
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
+                  loss='categorical_crossentropy',
+                  metrics=['accuracy'])
+
+    # Train the model
+    history = model.fit(x_train, y_train, epochs=20, batch_size=32, validation_split=0.2, verbose=2)
+
+    # Create output directory
+    output_dir = './output/Simple_CNN'
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Plot and save accuracy
+    epochs = range(1, len(history.history['accuracy']) + 1)
+    plt.figure(figsize=(8, 5))
+    plt.plot(epochs, history.history['accuracy'], label='Training Accuracy')
+    plt.plot(epochs, history.history['val_accuracy'], label='Validation Accuracy')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    plt.title('Training and Validation Accuracy')
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(os.path.join(output_dir, 'accuracy.png'))
+    plt.close()
+
+    # Plot and save loss
+    plt.figure(figsize=(8, 5))
+    plt.plot(epochs, history.history['loss'], label='Training Loss')
+    plt.plot(epochs, history.history['val_loss'], label='Validation Loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.title('Training and Validation Loss')
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(os.path.join(output_dir, 'loss.png'))
+    plt.close()
+
+    # Evaluate the model
+    test_loss, test_acc = model.evaluate(x_test, y_test, verbose=2)
+    print(f"Simple_CNN Model Test Accuracy: {test_acc:.4f}")
+
+    # Save the model
+    model.save(os.path.join(output_dir, 'Simple_CNN.h5'))
+
+    # Predict and save results
+    predictions = np.argmax(model.predict(x_test), axis=1)
+    y_test_labels = np.argmax(y_test, axis=1)
+
+    #Save results (ensure save_results function is defined)
+    save_results("Simple_CNN", y_test_labels, predictions, {"Base_Model": "Simple_CNN"})
+
+
+def efficientnet_v2(x_train, y_train, x_test, y_test):
+    # Convert labels to categorical format
+    y_train = keras.utils.to_categorical(y_train, 10)
+    y_test = keras.utils.to_categorical(y_test, 10)
+    
+    # Mostrar el tamaño de los conjuntos de datos
+    print(f"Number of training examples: {x_train.shape[0]}")
+    print(f"Number of test examples: {x_test.shape[0]}")
+    
+    # Scale images to the [0, 1] range and reshape
+    x_train = x_train.reshape(-1, 28, 28, 1)
+    x_test = x_test.reshape(-1, 28, 28, 1)
+
+    # Expand dimensions to make it compatible with EfficientNet
+    x_train = np.repeat(x_train, 3, axis=-1)  # Repeat grayscale channel 3 times
+    x_test = np.repeat(x_test, 3, axis=-1)
+
+    # Resize images to 32x32 to match EfficientNetV2's requirements
+    x_train = tf.image.resize(x_train, (32, 32)).numpy()
+    x_test = tf.image.resize(x_test, (32, 32)).numpy()
+
+    # Define input shape
+    input_shape = (32, 32, 3)
+
+    # Load the EfficientNetV2 model with pre-trained weights
+    base_model = EfficientNetV2B0(include_top=False, input_shape=input_shape, weights='imagenet', include_preprocessing=False)
+
+    # Partially freeze the base model
+    base_model.trainable = True
+    for layer in base_model.layers[:-50]:  # Freeze the first few layers
+        layer.trainable = False
+
+    # Build the full model
+    model = keras.Sequential([
+        base_model,
+        layers.Flatten(),
+        layers.Dense(256, activation='relu'),  # Increased capacity
+        layers.Dropout(0.5),
+        layers.Dense(128, activation='relu'),
+        layers.Dropout(0.5),
+        layers.Dense(10, activation='softmax')  # Output layer
+    ])
+
+    # Compile the model
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
+                  loss='categorical_crossentropy',
+                  metrics=['accuracy'])
+
+    # Train the model
+    history = model.fit(x_train, y_train, epochs=10, batch_size=32, validation_split=0.2, verbose=2)
+
+    # Crear carpeta para el algoritmo
+    output_dir = './output/EfficientNetV2'
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Visualizar y guardar las métricas
+    epochs = range(1, len(history.history['accuracy']) + 1)
+    
+    # Plot and save accuracy
+    plt.figure(figsize=(8, 5))
+    plt.plot(epochs, history.history['accuracy'], label='Training Accuracy')
+    plt.plot(epochs, history.history['val_accuracy'], label='Validation Accuracy')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    plt.title('Training and Validation Accuracy')
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(os.path.join(output_dir, 'accuracy.png'))
+    plt.close()
+
+    # Plot and save loss
+    plt.figure(figsize=(8, 5))
+    plt.plot(epochs, history.history['loss'], label='Training Loss')
+    plt.plot(epochs, history.history['val_loss'], label='Validation Loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.title('Training and Validation Loss')
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(os.path.join(output_dir, 'loss.png'))
+    plt.close()
+
+    # Evaluate the model
+    test_loss, test_acc = model.evaluate(x_test, y_test, verbose=2)
+    print(f"EfficientNetV2 Model Test Accuracy: {test_acc:.4f}")
+
+    # Save the model
+    model.save(os.path.join(output_dir, 'EfficientNetV2_model.h5'))
+
+    # Predict and save results
+    predictions = np.argmax(model.predict(x_test), axis=1)
+    y_test_labels = np.argmax(y_test, axis=1)
+    save_results("EfficientNetV2", y_test_labels, predictions, {"Base_Model": "EfficientNetV2B0"})
+
+
+
+
+
+
+def save_model(clf, algorithm):
+    dir_path = os.path.join(f"./output/{algorithm}")
+    file_path = os.path.join(dir_path,f"{algorithm}.sav")
+    saved_model = pickle.dump(clf, open(file_path, 'wb'))
+    print(f'Model {algorithm} saved correctly')
 
 
 def save_results(algorithm, y_test, predicted, hyperparameters):
@@ -298,7 +500,7 @@ def main():
     load_config()
     
     # Load the MNIST dataset
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
+    (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
 
     # Reshape the data to be 2D instead of 3D (28x28)
     x_train = x_train.reshape(len(x_train), -1) / 255.0
@@ -318,13 +520,13 @@ def main():
 
     # Select algorithms to use
     if use == "ALL":
-        algorithms = ["LINEAR SVM", "KNN", "RBF SVM", "RANDOM FOREST", "AdaBoost"]
+        algorithms = ["LINEAR SVM", "KNN", "RBF SVM", "RANDOM FOREST", "AdaBoost", "EfficientNetV2",  "Simple_CNN"]
     elif use == "ONLY":
         if len(algorithms) == 0:
             print("No algorithms specified in config file")
             exit()
     elif use == "WITHOUT":
-        all_algorithms = ["LINEAR SVM", "KNN", "RBF SVM", "RANDOM FOREST", "AdaBoost"]
+        all_algorithms = ["LINEAR SVM", "KNN", "RBF SVM", "RANDOM FOREST", "AdaBoost", "EfficientNetV2",  "Simple_CNN"]
         algorithms = list(set(all_algorithms) - set(algorithms))
         if len(algorithms) == 0:
             print("Please do not remove all algorithms from the list")
@@ -350,6 +552,11 @@ def main():
             random_forest(x_train_selected, y_train_selected, x_test, y_test)
         elif algorithm == "AdaBoost":
             AdaBoost(x_train_selected, y_train_selected, x_test, y_test)
+        elif algorithm == "EfficientNetV2":
+            efficientnet_v2(x_train_selected, y_train_selected, x_test, y_test)
+        elif algorithm == "Simple_CNN":
+            simple_CNN(x_train_selected, y_train_selected, x_test, y_test)
+        
         
         print(f"Training completed for {algorithm} in {time.time() - start_time:.2f} seconds")
 

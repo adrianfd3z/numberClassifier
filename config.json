@@ -1,7 +1,7 @@
 {
     "USE" : "ONLY",
-    "ALGORITHMS" : ["AdaBoost"],
-    "TRAINING SIZE": 5000,
+    "ALGORITHMS" : ["EfficientNetV2"],
+    "TRAINING SIZE": 20000,
     "BEST_HYPERPARAMETER_SEARCH" : "OFF",
     "USE_FULL_TRAIN": true,
     "HYPERPARAMETERS" : {

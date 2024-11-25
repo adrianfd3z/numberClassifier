@@ -1,0 +1,4 @@
+Hyperparameters for EfficientNetV2:
+{
+    "Base_Model": "EfficientNetV2B0"
+}
